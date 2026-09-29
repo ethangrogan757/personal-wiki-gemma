@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.egg-info/
+.DS_Store
+
+# Not shareable: copy-protected lecture PDFs from an earlier idea
+sources/
+
+# Obsidian's per-user workspace state
+vault/.obsidian/workspace*.json
+
+# Course handout (instructor's material, not mine to publish)
+Assignment 4_ Personal Wiki with Local Gemma + RAG.md
+
+# Full-size screen recordings (a compressed copy is committed under evidence/)
+*.mov

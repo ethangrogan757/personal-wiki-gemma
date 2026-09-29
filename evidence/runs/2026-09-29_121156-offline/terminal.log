@@ -1,0 +1,333 @@
+Personal wiki CLI: full check run
+date:    Tue Sep 29 12:11:56 PDT 2026
+network: offline (checked by trying https://www.google.com with a 5 s timeout)
+
+================================================================
+$ device specs
+================================================================
+      Model Name: MacBook Air
+      Chip: Apple M1
+      Total Number of Cores: 8 (4 performance and 4 efficiency)
+      Memory: 8 GB
+macOS 14.7.6
+free disk: 11Gi of 228Gi
+System-wide memory free percentage: 22%
+
+================================================================
+$ runtime and model
+================================================================
+ollama version is 0.34.4
+NAME                 ID              SIZE      MODIFIED     
+gemma4:e2b-it-qat    07ea59a47401    4.3 GB    18 hours ago    
+
+================================================================
+$ .venv/bin/wiki --help
+================================================================
+usage: wiki [-h] COMMAND ...
+
+Personal wiki over my coding-class projects, powered by local Gemma (offline).
+
+positional arguments:
+  COMMAND
+    ingest    read sources, generate linked wiki notes, update the index
+    reindex   rebuild the search index from vault/raw (no model needed)
+    check     check the vault: broken links, headings, note names, duplicates
+    search    show original matching passages and paths (no answer generated)
+    ask       standalone factual answer with citations, or 'insufficient
+              evidence'
+    chat      personal assistant; uses conversation context, looks up notes
+              when useful
+    status    show model, execution mode and whether the local model is ready
+
+options:
+  -h, --help  show this help message and exit
+
+examples:
+  wiki ingest ./vault/raw
+  wiki ingest ./vault/raw --force
+  wiki reindex
+  wiki check
+  wiki search "row level security"
+  wiki ask "What learning rate did I use for the Pac-Man DQN?" --mode local
+  wiki chat
+  wiki status
+
+configuration (environment variables):
+  WIKI_MODEL    local Ollama model      (default: gemma4:e2b-it-qat)
+  OLLAMA_HOST   Ollama server address   (default: http://localhost:11434)
+  WIKI_NUM_CTX  context window, tokens  (default: 8192)
+
+required inputs:
+  - Ollama running with the model pulled (ingest, ask, chat)
+  - source files (.md or .txt) in vault/raw/
+  - search needs only the index built by 'wiki ingest' or 'wiki reindex'; the model can be off
+[took 1s]
+
+================================================================
+$ .venv/bin/wiki status
+================================================================
+model:     gemma4:e2b-it-qat
+mode:      local (Ollama at http://localhost:11434)
+context:   8192 tokens
+vault:     /Users/ethangrogan/coding class/Wiki Assignment/vault
+model ready: yes
+[took 0s]
+
+================================================================
+$ .venv/bin/wiki ingest ./vault/raw/Pac-Man DQN README.md --force
+================================================================
+planning vault/raw/Pac-Man DQN README.md
+    reusing saved plan (stable note names)
+writing notes for vault/raw/Pac-Man DQN README.md
+    note 'Pac-Man DQN': 81.9s
+    note 'Deep Q-Network': 12.5s
+    note 'Experience Replay': 11.5s
+    note 'Learning Rate': 11.0s
+    note 'Model Evaluation': 12.3s
+log saved: evidence/runs/2026-09-29_121156-offline/ingest/2026-09-29_121212.md
+
+wrote 5 note blocks in 130s; updated vault/index.md and the search index
+vault check: 18 files, 14 wiki notes, 135 links
+  no problems found
+[took 130s]
+
+================================================================
+$ .venv/bin/wiki ask What learning rate did I use for the Pac-Man DQN? --label Test 1 (direct)
+================================================================
+ask: "What learning rate did I use for the Pac-Man DQN?"
+  (local · gemma4:e2b-it-qat · standalone: no chat history, no persona)
+
+The learning rate used for the Pac-Man DQN was 0.0001 [3].
+
+Citations:
+  [3] vault/raw/Pac-Man DQN README.md:26-30  (My three hyperparameters)
+      "| Setting | Value | Why I chose it | |---|---|---| | **Exploration** | `0.20` | Keeps 20% of post-warm-up trai…"
+
+5 passages retrieved, 1 cited · 23.8s · 1435 prompt tokens
+evidence card: evidence/runs/2026-09-29_121156-offline/ask/2026-09-29_121446_what-learning-rate-did-i-use-for-the.md
+[took 24s]
+
+================================================================
+$ .venv/bin/wiki ask How much better did my Pac-Man agent get after training? --label Test 2 (reworded)
+================================================================
+ask: "How much better did my Pac-Man agent get after training?"
+  (local · gemma4:e2b-it-qat · standalone: no chat history, no persona)
+
+The mean evaluation score rose from 492.0 (untrained) to 692.0 (trained), which is a ~41% improvement [3][4].
+
+Citations:
+  [3] vault/raw/Pac-Man DQN README.md:32-40  (My three hyperparameters)
+      "**Before training, I expected:** a small but real improvement in mean evaluation score, given only 100 episode…"
+  [4] vault/raw/Pac-Man DQN README.md:101-113  (Evidence > Before/after evaluation — all five scores)
+      "Same 5 fixed seeds, same 5% evaluation exploration, same 3,000-decision cap, before and after training. The ba…"
+
+5 passages retrieved, 2 cited · 5.0s · 1338 prompt tokens
+evidence card: evidence/runs/2026-09-29_121156-offline/ask/2026-09-29_121451_how-much-better-did-my-pac-man-agent.md
+[took 5s]
+
+================================================================
+$ .venv/bin/wiki ask What stops one user from seeing another user's contacts in my networking tracker? --label Test 3 (known evidence)
+================================================================
+ask: "What stops one user from seeing another user's contacts in my networking tracker?"
+  (local · gemma4:e2b-it-qat · standalone: no chat history, no persona)
+
+Row Level Security (RLS) is what stops one user from seeing another user's contacts [4]. This is enforced by the policy `contacts_select` which uses the condition `auth.user_id() = user_id` [2].
+
+Citations:
+  [4] vault/raw/Networking Tracker README.md:289-291  (Evidence)
+      "5. **User A cannot see or change User B's contacts** — verified live through the actual UI with two real accou…"
+  [2] vault/raw/Networking Tracker README.md:100-116  (Schema and Row Level Security)
+      "Row Level Security is enabled, with one ownership policy per operation: ```sql alter table contacts enable row…"
+
+5 passages retrieved, 2 cited · 7.1s · 1431 prompt tokens
+evidence card: evidence/runs/2026-09-29_121156-offline/ask/2026-09-29_121459_what-stops-one-user-from-seeing-another-user.md
+[took 8s]
+
+================================================================
+$ .venv/bin/wiki ask How much does it cost per month to host my Networking Tracker? --label Test 4 (unanswerable)
+================================================================
+ask: "How much does it cost per month to host my Networking Tracker?"
+  (local · gemma4:e2b-it-qat · standalone: no chat history, no persona)
+
+INSUFFICIENT EVIDENCE
+The provided sources do not contain information about the monthly hosting cost for the Networking Tracker.
+
+
+5 passages retrieved, 0 cited · 5.7s · 1387 prompt tokens
+evidence card: evidence/runs/2026-09-29_121156-offline/ask/2026-09-29_121505_how-much-does-it-cost-per-month-to.md
+[took 6s]
+
+================================================================
+$ memory while the model is loaded
+================================================================
+NAME                 ID              SIZE      PROCESSOR    CONTEXT    UNTIL              
+gemma4:e2b-it-qat    07ea59a47401    1.8 GB    100% GPU     8192       4 minutes from now    
+/Applications/Ollama.app/Contents/MacOS/Ollama      2 MB
+/Applications/Ollama.app/Contents/Resources/ollama      9 MB
+/Applications/Ollama.app/Contents/Resources/llama-server    153 MB
+
+================================================================
+$ .venv/bin/wiki search row level security -k 3
+================================================================
+search: "row level security"  (BM25 keyword search over vault/raw, no model used)
+
+[1] vault/raw/Networking Tracker README.md:100-116  score 11.08
+    section: Schema and Row Level Security
+    matched: row, level, security
+    Row Level Security is enabled, with one ownership policy per operation:
+    
+    ```sql
+    alter table contacts enable row level security;
+    
+    create policy contacts_select on contacts for select to authenticated
+      using (auth.user_id() = user_id);
+    
+    create policy contacts_insert on contacts for insert to authenticated
+      with check (auth.user_id() = user_id);
+    
+    create policy contacts_update on contacts for update to authenticated
+      using (auth.user_id() = user_id) with check (auth.user_id() = user_id);
+    
+    create policy contacts_delete on contacts for delete to authenticated
+      using (auth.user_id() = user_id);
+    ```
+
+[2] vault/raw/Networking Tracker README.md:296-296  score 10.11
+    section: Evidence
+    matched: row, level, security
+    9. **The README contains every required section and all grading evidence** — Architecture, Schema and Row Level Security, Security summary, Project layout, Setup, Testing, Deployment, Evidence (this section), Known limitations — all present in this file.
+
+[3] vault/raw/Networking Tracker README.md:289-291  score 9.22
+    section: Evidence
+    matched: row, level, security
+    5. **User A cannot see or change User B's contacts** — verified live through the actual UI with two real accounts: signed in as `validate-run@example.com`, created a contact; signed out; signed up as `validate-userb@example.com`; its contact list came back empty (`0 contacts`) despite user A's contact existing in the same table. RLS (`auth.user_id() = user_id`) is what enforces this — see [Schema and Row Level Security](#schema-and-row-level-security).
+    6. **Invalid data fails safely with a clear message** — verified at all three layers:
+       - Client: submitting the "New contact" form with an empty name is blocked by the browser's native validation ("Please fill out this field") before any network request fires.
+
+evidence card: evidence/runs/2026-09-29_121156-offline/search/2026-09-29_121505_row-level-security.md
+[took 0s]
+
+================================================================
+$ chat mode checks: capabilities, draft + follow-up, factual lookup
+================================================================
+Scout · chat mode (local · gemma4:e2b-it-qat)
+Personal assistant with conversation memory; looks up your notes only when needed. /help for commands.
+
+you> what can we do?
+
+scout> We can work on whatever you need help with for your coding class portfolio. I can help you brainstorm ideas, plan out next steps for a project, or draft and edit things like README sections, study notes, or outlines.
+
+What are you currently working on or thinking about?
+
+  [no notes lookup]
+  (5.8s)
+
+you> what can you help me with?
+
+scout> I can help you with a few things:
+
+*   **Brainstorming and Planning:** We can come up with ideas for projects, map out a study plan, or figure out the next steps for a current assignment.
+*   **Drafting and Editing Text:** I can help you write or revise things like README sections, study notes, summaries, or emails.
+*   **Looking Up Information:** I can pull facts and specific details from your class project wiki (Networking Tracker, Pac-Man DQN agent, Custom LLM experiment) when you need specific context.
+
+What project or task are you looking at right now?
+
+  [no notes lookup]
+  (8.2s)
+
+you> Draft a short study plan for reviewing my three class projects before my final exam.
+
+scout> Here is a suggested study plan focusing on your three projects. This is just a starting point, feel free to adjust it based on what you feel weakest in.
+
+**Study Plan Draft**
+
+**Goal:** Prepare for the final exam by solidifying knowledge across the three projects.
+
+**Phase 1: Project Deep Dive (Focus: Understanding the core mechanics)**
+
+1.  **Networking Tracker:** Review the core API endpoints and validation logic. Focus on understanding the successful test cases from the README. [1]
+2.  **Pac-Man DQN Agent:** Review the setup and the results from your training. Focus on *why* the agent performed the way it did based on the hyperparameters you chose. [2]
+3.  **Custom LLM (nanoGPT):** Review the entire process: training from scratch, inspecting learned knowledge, and the iteration process with corpus extensions. Pay close attention to the diagnosis for the first failed extension attempt. [3]
+
+**Phase 2: Integration and Review (Focus: Connecting concepts)**
+
+1.  **Cross-Project Comparison:** Think about how the concepts overlap. For example, if you need to explain model training (DQN or LLM) vs. data validation (Networking Tracker).
+2.  **Self-Quiz:** Try to explain the key takeaway/result of each project out loud, as if you were explaining it to someone else.
+
+**Suggestion:** Since the notes you have are very task-oriented (test results, execution steps), focus your review time on *explaining the 'why'* behind those results, not just re-running the code.
+
+Does this plan sound like a good structure, or should we focus more time on one specific project?
+
+  [looked up notes · Networking Tracker, Pac-Man DQN, Custom LLM · search: "study plan for class projects" · 3 passages]
+  [1] vault/raw/Networking Tracker README.md:234-252  (Testing)
+  [2] vault/raw/Pac-Man DQN README.md:3-8  (Class 3: Training a DQN Agent to Play Ms. Pac-Man)
+  [3] vault/raw/Custom LLM README.md:3-13  (Ethan's Custom LLM Experiment)
+  (19.6s)
+
+you> make that shorter
+
+scout> Here is a shorter version:
+
+**Short Study Plan:**
+
+1.  **Project Deep Dive:** Review the core mechanics for the Networking Tracker (API/validation), Pac-Man DQN Agent (training/hyperparameters), and Custom LLM (training/extension process).
+2.  **Compare & Connect:** Focus on how concepts overlap between the projects.
+3.  **Self-Quiz:** Explain each project's key result out loud.
+
+Keep it focused on *why* things work, not just re-running the code. Want to drill down into one project first?
+
+  [no notes lookup]
+  (9.0s)
+
+you> What learning rate did I use for the Pac-Man DQN?
+
+scout> The learning rate you used for the Pac-Man DQN was **0.0001**.
+
+That was the reference Adam learning rate tuned for the classroom-scale setup with a 5,000-transition replay buffer and batch size of 32 [1].
+
+  [looked up notes · Pac-Man DQN · search: "Pac-Man DQN learning rate" · 4 passages]
+  [1] vault/raw/Pac-Man DQN README.md:26-30  (My three hyperparameters)
+  (12.5s)
+
+you> /exit
+transcript saved: evidence/runs/2026-09-29_121156-offline/chat/2026-09-29_121600_transcript.md
+[took 55s]
+
+================================================================
+$ chat claim vs ask evidence
+================================================================
+Scout · chat mode (local · gemma4:e2b-it-qat)
+Personal assistant with conversation memory; looks up your notes only when needed. /help for commands.
+
+you> Quick note: hosting my Networking Tracker costs $20 a month.
+
+scout> Got it. Hosting the Networking Tracker is $20/month. Let me know if you need help with anything else.
+
+  [no notes lookup]
+  (5.4s)
+
+you> So how much does hosting my Networking Tracker cost per month?
+
+scout> Based on the info I have, hosting your Networking Tracker costs $20 a month.
+
+  [looked up notes · Networking Tracker · search: "Networking Tracker hosting cost" · 4 passages]
+  (7.8s)
+
+you> /exit
+transcript saved: evidence/runs/2026-09-29_121156-offline/chat/2026-09-29_121614_transcript.md
+
+================================================================
+$ .venv/bin/wiki ask How much does it cost per month to host my Networking Tracker? --label Chat claim check
+================================================================
+ask: "How much does it cost per month to host my Networking Tracker?"
+  (local · gemma4:e2b-it-qat · standalone: no chat history, no persona)
+
+INSUFFICIENT EVIDENCE
+The provided sources do not contain information about the monthly hosting cost for the Networking Tracker.
+
+
+5 passages retrieved, 0 cited · 1.5s · 1387 prompt tokens
+evidence card: evidence/runs/2026-09-29_121156-offline/ask/2026-09-29_121616_how-much-does-it-cost-per-month-to.md
+[took 2s]
+
+run finished: Tue Sep 29 12:16:16 PDT 2026 · network was offline · evidence in evidence/runs/2026-09-29_121156-offline
